@@ -13,7 +13,7 @@ git clone https://github.com/visuxls/tipranks
 ```
 ## Features
 - Support for the majority of TipRanks API endpoints (create an issue if I missed any)
-- Automated browser login via Selenium
+- Automated headless login via Selenium
 
 ## To-Do
 - [ ] `Login`: Implement request based login

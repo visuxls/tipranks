@@ -6,14 +6,28 @@ from .errors import (
 	TipRanksLoginError
 )
 
-import undetected_chromedriver as uc
+from selenium import webdriver
+from selenium_stealth import stealth
 
 
 class TipRanksLogin:
 	def __init__(self, email, password):
-		options = uc.ChromeOptions()
-		options.add_experimental_option("excludeSwitches", ["enable-automation","enable-logging"])
-		self.driver = uc.Chrome(options=options)
+		options = webdriver.ChromeOptions()
+		options.add_argument("--headless")
+		options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+		options.add_experimental_option("useAutomationExtension", False)
+		self.driver = webdriver.Chrome(options=options)
+
+		stealth(
+			self.driver,
+			languages=["en-US", "en"],
+			vendor="Google Inc.",
+			platform="Win32",
+			webgl_vendor="Intel Inc.",
+			renderer="Intel Iris OpenGL Engine",
+			fix_hairline=True,
+		)
+
 		self.email = email
 		self.password = password
 
