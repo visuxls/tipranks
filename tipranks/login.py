@@ -59,6 +59,7 @@ class TipRanksLogin:
 			self.driver.quit()
 			raise TipRanksLoginError("Failed To Login, Check Credentials")
 
+		self.driver.refresh()
 		login = self.find_cookies()
 
 		if not login:
