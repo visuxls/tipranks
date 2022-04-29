@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 	name="tipranks",
-	version="0.0.1",
+	version="0.0.2",
 	author="visuxls",
 	description="Python interface to communicate with TipRanks API.",
 	long_description=long_description,
@@ -18,5 +18,5 @@ setuptools.setup(
 	],
 	python_requires='>=3.6',
 	py_modules=["tipranks"],
-	install_requires=["requests", "undetected-chromedriver>=3.0.0", "selenium"]
+	install_requires=["requests", "selenium-stealth", "selenium"]
 )
