@@ -13,6 +13,7 @@ from selenium_stealth import stealth
 class TipRanksLogin:
 	def __init__(self, email, password):
 		options = webdriver.ChromeOptions()
+		options.add_argument("window-size=1920,1080")
 		options.add_argument("--headless")
 		options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
 		options.add_experimental_option("useAutomationExtension", False)
