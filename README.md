@@ -13,14 +13,19 @@ git clone https://github.com/visuxls/tipranks
 ```
 ## Features
 - Support for the majority of TipRanks API endpoints (create an issue if I missed any)
-- Automated headless login via Selenium
+- Request based login, Chrome not required
+
+## Requirements
+ - Ultimate or Premium account to have access to all methods
 
 ## To-Do
-- [ ] `Login`: Implement request based login
+- [x] `Login`: Implement request based login
 - [ ] `Filtered results`: Implement filtered results
 
+Have a suggestion? Create an issue and I'll add it!
+
 ## Usage
-![Usage](https://i.imgur.com/gs48kJN.png)
+![Usage](https://i.imgur.com/ZjbWlxv.png)
 
 ## Supported Methods
 ```.top_analyst_stocks()```
@@ -38,7 +43,5 @@ git clone https://github.com/visuxls/tipranks
 ```.top_experts(expert_type="analyst")```
 
 ```.anaylst_projection(ticker="TSLA")```
-
-```.stock_summary(ticker="TSLA")```
 
 ```.news_sentiment(ticker="TSLA")```

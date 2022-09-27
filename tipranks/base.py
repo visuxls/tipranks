@@ -1,14 +1,12 @@
-from tipranks.errors import (
-	TipRanksArgsError,
+from errors import (
+	TipRanksStatusCodeError,
+	TipRanksArgumentError,
 	TipRanksRequestError
 )
-from .login import TipRanksLogin
+from typing import Optional, Any
 import requests
 import time
 
-
-_BASE_URL_ = "https://www.tipranks.com/api"
-_AZURE_URL_ = "https://tr-frontend-cdn.azureedge.net"
 
 EXPERT_TYPES = [
 	"analyst",
@@ -21,55 +19,67 @@ EXPERT_TYPES = [
 
 class TipRanks:
 	def __init__(self, email: str, password: str) -> None:
-		tipranks = TipRanksLogin(
-			email=email,
-			password=password
-		)
-		self.cookies = tipranks.login()
+		self._base_url: str = "https://mobile.tipranks.com"
+		self._session: requests.sessions.Session = requests.Session()
 
-	def request(self, method: str, url: str, params: dict) -> list:
+		self.login(email=email, password=password)
+
+	def __request(
+		self, method: str, endpoint: str, params: Optional[dict] = None, json: Optional[dict] = None, login: Optional[bool] = None
+	) -> Any:
 		try:
-			response = requests.request(
-				method.upper(),
-				url,
-				headers = {
-					"authority": "www.tipranks.com",
-					"accept": "*/*",
-					"accept-language": "en-US,en;q=0.9",
-					"referer": "https://www.tipranks.com/",
-					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"101\", \"Google Chrome\";v=\"101\"",
-					"sec-ch-ua-mobile": "?0",
-					"sec-ch-ua-platform": "\"Windows\"",
-					"sec-fetch-dest": "empty",
-					"sec-fetch-mode": "cors",
-					"sec-fetch-site": "same-origin",
-					"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Safari/537.36",
-					"cookie": self.cookies
+			response = self._session.request(
+				method=method.upper(),
+				url=f"{self._base_url}{endpoint}",
+				headers={
+					"accept": "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+					"content-type": "application/json; charset=UTF-8",
+					"accept-encoding": "gzip",
+					"x-platform": "iphone",
+					"user-agent": "TipRanksApp/17 CFNetwork/1390 Darwin/22.0.0",
+					"accept-language": "en-US,en;q=0.9"
 				},
-				params = params
+				json=json,
+				params=params
 			)
-
 		except:
 			raise TipRanksRequestError("Request Timed Out")
 
+		if login:
+			return response.status_code
+
 		return response.json()
 
+	def login(self, email: str, password: str) -> None:
+		status_code = self.__request(
+			method="POST",
+			endpoint="/api/iOS/login2",
+			json={
+				"email": email,
+				"password": password
+			},
+			login=True
+		)
+
+		if status_code != 200:
+			raise TipRanksStatusCodeError(f"Failed To Login, Status Code: {status_code}")
+
 	def get_top_analyst_stocks(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/stocks/getMostRecommendedStocks/",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/stocks/getMostRecommendedStocks/",
+			params={
 				"benchmark": "1",
 				"period": "3",
 				"country": "US",
-				"break": ""
+				"break": int(time.time())
 			}
 		)
 
 	def get_top_smart_score_stocks(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/Screener/GetStocks/",
+		return self.__request(
+			method="GET",
+			endpoint="/api/Screener/GetStocks/",
 			params = {
 				"break": int(time.time()),
 				"country": "US",
@@ -81,21 +91,21 @@ class TipRanks:
 		)
 
 	def get_top_insider_stocks(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/insiders/getTrendingStocks/",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/insiders/getTrendingStocks/",
+			params={
 				"benchmark": "1",
 				"period": "3",
 				"country": "US",
-				"break": ""
+				"break": int(time.time())
 			}
 		)
 
 	def get_stock_screener(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/Screener/GetStocks/",
+		return self.__request(
+			method="GET",
+			endpoint="/api/Screener/GetStocks/",
 			params = {
 				"break": int(time.time()),
 				"country": "US",
@@ -106,23 +116,23 @@ class TipRanks:
 		)
 
 	def get_top_online_growth_stocks(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/websiteTraffic/screener",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/websiteTraffic/screener",
+			params={
 				"country": "us"
 			}
 		)
 
 	def get_trending_stocks(self) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/stocks/gettrendingstocks/",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/stocks/gettrendingstocks/",
+			params={
 				"daysago": "30",
 				"which": "most",
 				"country": "us",
-				"break": ""
+				"break": int(time.time())
 			}
 		)
 
@@ -140,46 +150,39 @@ class TipRanks:
 				"numExperts": "100"
 			}
 
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/experts/GetTop25Experts/",
-			params = params
+		return self.__request(
+			method="GET",
+			endpoint="/api/experts/GetTop25Experts/",
+			params=params
 		)
 
 	def get_analyst_projection(self, ticker: str) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/compare/analystRatings/tickers/",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/compare/analystRatings/tickers/",
+			params={
 				"tickers": ticker.lower()
 			}
 		)
 
-	def get_stock_summary(self, ticker: str) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_AZURE_URL_}/bff/prod/stock/{ticker.lower()}/payload.json",
-			params = {}
-		)
-
 	def get_news_sentiment(self, ticker: str) -> list:
-		return self.request(
-			method = "GET",
-			url = f"{_BASE_URL_}/stocks/getNews/",
-			params = {
+		return self.__request(
+			method="GET",
+			endpoint="/api/stocks/getNews/",
+			params={
 				"ticker": ticker
 			}
 		)
 
-	def top_analyst_stocks(self) -> list:
+	def top_analyst_stocks(self) -> dict:
 		"""
 		Returns the current recommended stocks. The list is
-		curated based on stocks with a 'Strong Buy' or 
+		curated based on stocks with a 'Strong Buy' or
 		'Strong Sell' rating consensus.
 		"""
-		data = self.get_top_analyst_stocks()
+		body = self.get_top_analyst_stocks()
 
-		return data
+		return body
 
 	def top_smart_score_stocks(self) -> list:
 		"""
@@ -187,27 +190,27 @@ class TipRanks:
 		This unique score measures stocks on their potential to
 		outperform the market, based on 8 key factors.
 		"""
-		data = self.get_top_smart_score_stocks()
+		body = self.get_top_smart_score_stocks()
 
-		return data
+		return body
 
 	def top_insider_stocks(self) -> list:
 		"""
 		Returns the current insider stocks. The list is
 		curated based on insider trading.
 		"""
-		data = self.get_top_insider_stocks()
+		body = self.get_top_insider_stocks()
 
-		return data
+		return body
 
 	def stock_screener(self) -> list:
 		"""
 		Returns unique signals and data. See a comprehensive
 		overview of stock performance.
 		"""
-		data = self.get_stock_screener()
+		body = self.get_stock_screener()
 
-		return data
+		return body
 
 	def top_online_growth_stocks(self) -> list:
 		"""
@@ -215,9 +218,9 @@ class TipRanks:
 		These top websites have the highest website traffic
 		increases over the past month.
 		"""
-		data = self.get_top_online_growth_stocks()
+		body = self.get_top_online_growth_stocks()
 
-		return data
+		return body
 
 	def trending_stocks(self) -> list:
 		"""
@@ -225,9 +228,9 @@ class TipRanks:
 		curated based on if a stock has been rated by 3 or
 		more analysts in the last few days.
 		"""
-		data = self.get_trending_stocks()
+		body = self.get_trending_stocks()
 
-		return data
+		return body
 
 	def top_experts(self, expert_type: str) -> list:
 		"""
@@ -236,30 +239,20 @@ class TipRanks:
 		Managers, Research Firms, and Individual Investors.
 		"""
 		if expert_type not in EXPERT_TYPES:
-			raise TipRanksArgsError(f"{expert_type} is not a valid choice. The valid choices are {', '.join(EXPERT_TYPES)}.")
+			raise TipRanksArgumentError(f"{expert_type} is not a valid choice. The valid choices are {', '.join(EXPERT_TYPES)}.")
 
-		data = self.get_top_experts(expert_type)
+		body = self.get_top_experts(expert_type)
 
-		return data
+		return body
 
 	def anaylst_projection(self, ticker: str) -> list:
 		"""
 		Returns all of the available analyst projections
 		for a given ticker.
 		"""
-		data = self.get_analyst_projection(ticker)
+		body = self.get_analyst_projection(ticker)
 
-		return data
-
-	def stock_summary(self, ticker: str) -> list:
-		"""
-		Returns a summary of the current stock's standing
-		with analysts. Provides consensus and best_consensus
-		ratings.
-		"""
-		data = self.get_stock_summary(ticker)
-
-		return data
+		return body
 
 	def news_sentiment(self, ticker: str) -> list:
 		"""

@@ -1,8 +1,8 @@
 class TipRanksRequestError(Exception):
 	pass
 
-class TipRanksLoginError(Exception):
-	pass
+class TipRanksStatusCodeError(Exception):
+    pass
 
-class TipRanksArgsError(Exception):
+class TipRanksArgumentError(Exception):
 	pass
